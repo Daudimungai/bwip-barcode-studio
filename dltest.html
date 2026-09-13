@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAMVA v08</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Consolas, monospace;
+        }
+
+        body {
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 15px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .row {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .row1 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .row2 {
+            grid-template-columns: 2fr 2fr 1.3fr 1.3fr .7fr .7fr;
+        }
+
+        .row3 {
+            grid-template-columns: 1fr 1fr 1fr 1.5fr 1.5fr;
+        }
+
+        .row4 {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+
+        .row5 {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #000;
+        }
+
+        input,
+        select {
+            height: 40px;
+            border: 1px solid #cfcfcf;
+            border-radius: 4px;
+            padding: 0 12px;
+            font-size: 15px;
+            background: white;
+        }
+
+        .input-group {
+            display: flex;
+        }
+
+        .input-group input {
+            flex: 1;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .unit {
+            min-width: 80px;
+            border: 1px solid #cfcfcf;
+            border-left: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f8f8;
+            border-radius: 0 4px 4px 0;
+            font-size: 14px;
+        }
+
+        .button-area {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        button {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 10px 35px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0b5ed7;
+        }
+
+        .output {
+            margin-top: 25px;
+            background: #1e1e1e;
+            color: #00ff88;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+
+        <div class="row row1">
+            <div class="field">
+                <label>DL Number</label>
+                <input id="dlNumber" value="D1234567">
+            </div>
+
+            <div class="field">
+                <label>First name</label>
+                <input id="firstName" value="John">
+            </div>
+
+            <div class="field">
+                <label>Last name</label>
+                <input id="lastName" value="Doe">
+            </div>
+
+            <div class="field">
+                <label>Middle name</label>
+                <input id="middleName">
+            </div>
+        </div>
+
+        <div class="row row2">
+            <div class="field">
+                <label>Address</label>
+                <input id="address" value="516 Anson Ct">
+            </div>
+
+            <div class="field">
+                <label>City</label>
+                <input id="city" value="Rohnert Park">
+            </div>
+
+            <div class="field">
+                <label>Zip code</label>
+                <input id="zip" value="875420000">
+            </div>
+
+            <div class="field">
+                <label>DL Class</label>
+                <input id="dlClass" value="C">
+            </div>
+
+            <div class="field">
+                <label>Sex</label>
+                <select id="sex">
+                    <option>M</option>
+                    <option>F</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Donor</label>
+                <select id="donor">
+                    <option>No</option>
+                    <option>Yes</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row row3">
+            <div class="field">
+                <label>Birth date</label>
+                <input id="birthDate" value="01151970">
+            </div>
+
+            <div class="field">
+                <label>Issue date</label>
+                <input id="issueDate" value="11262025">
+            </div>
+
+            <div class="field">
+                <label>Expiry date</label>
+                <input id="expiryDate" value="01152030">
+            </div>
+
+            <div class="field">
+                <label>DD</label>
+                <input id="dd" value="08/25/202165508/AAFD/26">
+            </div>
+
+            <div class="field">
+                <label>ICN</label>
+                <input id="icn" value="21237D12345670401">
+            </div>
+        </div>
+
+        <div class="row row4">
+            <div class="field">
+                <label>Restrictions</label>
+                <input id="restrictions" value="NONE">
+            </div>
+
+            <div class="field">
+                <label>Endorsement</label>
+                <input id="endorsement" value="NONE">
+            </div>
+
+            <div class="field">
+                <label>Height (in.)</label>
+
+                <div class="input-group">
+                    <input id="height" value="69">
+                    <div class="unit">≈175 cm</div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Weight (lb.)</label>
+
+                <div class="input-group">
+                    <input id="weight" value="169">
+                    <div class="unit">≈76 kg</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row row5">
+            <div class="field">
+                <label>Name Suffix</label>
+                <select id="suffix">
+                    <option>NONE</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Limited Term</label>
+                <select id="limited">
+                    <option>No</option>
+                    <option>Yes</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Eye (as on DL)</label>
+                <select id="eyeDl">
+                    <option>BRN (Brown)</option>
+                    <option>BLU (Blue)</option>
+                    <option>GRN (Green)</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Eye (ANSI D-20)</label>
+                <select id="eyeAnsi">
+                    <option>BRO (Brown)</option>
+                    <option>BLU (Blue)</option>
+                    <option>GRN (Green)</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Hair (as on DL)</label>
+                <select id="hairDl">
+                    <option>BRN (Brown)</option>
+                    <option>BLK (Black)</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Hair (ANSI D-20)</label>
+                <select id="hairAnsi">
+                    <option>BRO (Brown)</option>
+                    <option>BLK (Black)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="button-area">
+            <button onclick="createCard()">Create</button>
+        </div>
+
+        <div id="output" class="output"></div>
+
+    </div>
+
+    <script>
+        function createCard() {
+
+            const data = {
+                dlNumber: document.getElementById('dlNumber').value,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                middleName: document.getElementById('middleName').value,
+                address: document.getElementById('address').value,
+                city: document.getElementById('city').value,
+                zip: document.getElementById('zip').value,
+                dlClass: document.getElementById('dlClass').value,
+                sex: document.getElementById('sex').value,
+                donor: document.getElementById('donor').value,
+                birthDate: document.getElementById('birthDate').value,
+                issueDate: document.getElementById('issueDate').value,
+                expiryDate: document.getElementById('expiryDate').value,
+                dd: document.getElementById('dd').value,
+                icn: document.getElementById('icn').value,
+                restrictions: document.getElementById('restrictions').value,
+                endorsement: document.getElementById('endorsement').value,
+                height: document.getElementById('height').value,
+                weight: document.getElementById('weight').value,
+                suffix: document.getElementById('suffix').value,
+                limitedTerm: document.getElementById('limited').value,
+                eyeDL: document.getElementById('eyeDl').value,
+                eyeANSI: document.getElementById('eyeAnsi').value,
+                hairDL: document.getElementById('hairDl').value,
+                hairANSI: document.getElementById('hairAnsi').value
+            };
+
+            const output = document.getElementById("output");
+
+            output.style.display = "block";
+            output.textContent =
+                JSON.stringify(data, null, 4);
+        }
+    </script>
+
+</body>
+
+</html>

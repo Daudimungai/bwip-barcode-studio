@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibeCode Studio - Professional Barcode & QR Generator</title>
+  <meta name="description" content="Studio-grade Barcode and QR Code Generator & Verifier supporting 100+ symbologies powered by bwip-js.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Remix Icon CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- bwip-js barcode rendering engine -->
+  <script src="js/vendor/bwip-js-min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/bwip-js@latest/dist/bwip-js-min.js'"></script>
+  
+  <!-- jsQR for camera scanning -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="styles.css?v=1.0.3">
+</head>
+<body class="theme-dark">
+
+  <!-- TOP APP HEADER -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">
+        <i class="ri-barcode-box-line"></i>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">VibeCode <span class="badge-pro">STUDIO</span></span>
+        <span class="brand-sub">BWIP-JS Barcode & QR Suite</span>
+      </div>
+    </div>
+
+    <!-- MAIN TAB NAVIGATION -->
+    <nav class="app-nav">
+      <button class="nav-tab active" data-tab="studio">
+        <i class="ri-edit-box-line"></i> Studio Generator
+      </button>
+      <button class="nav-tab" data-tab="presets">
+        <i class="ri-layout-grid-line"></i> Presets
+      </button>
+      <button class="nav-tab" data-tab="batch">
+        <i class="ri-stack-line"></i> Batch Generator
+      </button>
+      <button class="nav-tab" data-tab="print">
+        <i class="ri-printer-line"></i> Print Sheet
+      </button>
+
+      <button class="nav-tab" data-tab="dlbuilder">
+        <i class="ri-id-card-line"></i> AAMVA DL Builder
+      </button>
+      <button class="nav-tab" data-tab="history">
+        <i class="ri-history-line"></i> History <span class="badge-count" id="historyCountBadge">0</span>
+      </button>
+    </nav>
+
+    <!-- RIGHT HEADER ACTIONS -->
+    <div class="header-actions">
+      <button id="themeToggleBtn" class="icon-btn" title="Toggle Light/Dark Theme">
+        <i class="ri-sun-line"></i>
+      </button>
+      <button id="helpBtn" class="icon-btn" title="Barcode Format Guide">
+        <i class="ri-question-line"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="app-container">
+
+    <!-- ==================== TAB 1: STUDIO GENERATOR ==================== -->
+    <div class="tab-pane active" id="tab-studio">
+      <div class="studio-layout">
+        
+        <!-- SIDEBAR CONTROLS -->
+        <aside class="studio-sidebar">
+          <div class="sidebar-header">
+            <h3><i class="ri-sliders-line"></i> Barcode Options</h3>
+            <button id="resetDefaultsBtn" class="btn-text-sm" title="Reset controls to default"><i class="ri-refresh-line"></i> Reset</button>
+          </div>
+
+          <!-- SYMBOLOGY SELECTOR -->
+          <div class="control-group">
+            <label for="categoryFilter"><i class="ri-filter-3-line"></i> Category Filter</label>
+            <select id="categoryFilter" class="form-select"></select>
+          </div>
+
+          <div class="control-group">
+            <label for="barcodeTypeSelect"><i class="ri-barcode-line"></i> Barcode Symbology</label>
+            <div class="searchable-select-wrap">
+              <select id="barcodeTypeSelect" class="form-select highlight-select"></select>
+            </div>
+          </div>
+
+          <!-- DATA INPUT AREA -->
+          <div class="control-group">
+            <div class="label-with-action">
+              <label for="barcodeInput"><i class="ri-input-cursor-move"></i> Payload Data</label>
+              <button id="sampleDataBtn" class="btn-link"><i class="ri-magic-line"></i> Sample</button>
+            </div>
+            <textarea id="barcodeInput" class="form-textarea" rows="3" placeholder="Enter text or numbers to encode..."></textarea>
+            <div class="input-meta">
+              <span id="charCount" class="meta-item">Length: 0</span>
+              <span id="validationStatus" class="meta-item status-valid"><i class="ri-checkbox-circle-line"></i> Valid</span>
+            </div>
+          </div>
+
+          <!-- ACCORDION 1: SIZE & ROTATION -->
+          <div class="accordion-item open">
+            <button class="accordion-header">
+              <span><i class="ri-aspect-ratio-line"></i> Scale & Dimensions</span>
+              <i class="ri-arrow-down-s-line accordion-arrow"></i>
+            </button>
+            <div class="accordion-body">
+              
+              <div class="control-group">
+                <div class="slider-label">
+                  <span>Scale Multiplier</span>
+                  <span id="scaleValue" class="slider-num">3x</span>
+                </div>
+                <input type="range" id="scaleInput" min="1" max="10" step="1" value="3" class="form-range">
+              </div>
+
+              <div class="control-group">
+                <div class="slider-label">
+                  <span>Bar Height (mm)</span>
+                  <span id="heightValue" class="slider-num">15</span>
+                </div>
+                <input type="range" id="heightInput" min="5" max="60" step="1" value="15" class="form-range">
+              </div>
+
+              <div class="control-group">
+                <label>Rotation</label>
+                <div class="btn-group-toggle" id="rotationGroup">
+                  <button class="toggle-btn active" data-val="N">0° (Norm)</button>
+                  <button class="toggle-btn" data-val="R">90° (Right)</button>
+                  <button class="toggle-btn" data-val="I">180° (Invert)</button>
+                  <button class="toggle-btn" data-val="L">270° (Left)</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ACCORDION 2: COLORS & THEMES -->
+          <div class="accordion-item open">
+            <button class="accordion-header">
+              <span><i class="ri-palette-line"></i> Colors & Transparency</span>
+              <i class="ri-arrow-down-s-line accordion-arrow"></i>
+            </button>
+            <div class="accordion-body">
+              
+              <div class="color-pickers-grid">
+                <div class="control-group">
+                  <label for="barColorInput">Bar / Code Color</label>
+                  <div class="color-picker-wrap">
+                    <input type="color" id="barColorInput" value="#000000" class="color-picker">
+                    <input type="text" id="barColorHex" value="#000000" class="form-input text-mono hex-input">
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <label for="bgColorInput">Background Color</label>
+                  <div class="color-picker-wrap">
+                    <input type="color" id="bgColorInput" value="#FFFFFF" class="color-picker">
+                    <input type="text" id="bgColorHex" value="#FFFFFF" class="form-input text-mono hex-input">
+                  </div>
+                </div>
+              </div>
+
+              <div class="control-group checkbox-row">
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="transparentBgCheck">
+                  <span class="checkmark"></span>
+                  Transparent Background (SVG / PNG)
+                </label>
+              </div>
+
+              <div class="control-group">
+                <label>Color Presets</label>
+                <div class="preset-colors">
+                  <button class="color-preset-btn" style="background:#000000; border-color:#ffffff;" data-bar="#000000" data-bg="#ffffff" title="Classic High Contrast"></button>
+                  <button class="color-preset-btn" style="background:#1e1b4b; border-color:#818cf8;" data-bar="#4f46e5" data-bg="#ffffff" title="Indigo Cyber"></button>
+                  <button class="color-preset-btn" style="background:#064e3b; border-color:#34d399;" data-bar="#059669" data-bg="#ffffff" title="Emerald Green"></button>
+                  <button class="color-preset-btn" style="background:#4c1d95; border-color:#c084fc;" data-bar="#7e22ce" data-bg="#ffffff" title="Deep Purple"></button>
+                  <button class="color-preset-btn" style="background:#78350f; border-color:#fbbf24;" data-bar="#d97706" data-bg="#ffffff" title="Amber Industrial"></button>
+                  <button class="color-preset-btn" style="background:#000000; border-color:#fbbf24;" data-bar="#000000" data-bg="#fef08a" title="Caution Yellow"></button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ACCORDION 3: HUMAN-READABLE TEXT & MARGINS -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <span><i class="ri-text-snippet"></i> Text & Quiet Zone</span>
+              <i class="ri-arrow-down-s-line accordion-arrow"></i>
+            </button>
+            <div class="accordion-body">
+              
+              <div class="control-group checkbox-row">
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="includeTextCheck" checked>
+                  <span class="checkmark"></span>
+                  Include Human-Readable Text
+                </label>
+              </div>
+
+              <div class="control-group">
+                <label for="textPosSelect">Text Position</label>
+                <select id="textPosSelect" class="form-select">
+                  <option value="bottom" selected>Bottom (Standard)</option>
+                  <option value="top">Top</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <div class="slider-label">
+                  <span>Font Size (pt)</span>
+                  <span id="textSizeValue" class="slider-num">10</span>
+                </div>
+                <input type="range" id="textSizeInput" min="6" max="24" step="1" value="10" class="form-range">
+              </div>
+
+              <div class="control-group">
+                <div class="slider-label">
+                  <span>Quiet Zone / Padding</span>
+                  <span id="paddingValue" class="slider-num">10px</span>
+                </div>
+                <input type="range" id="paddingInput" min="0" max="40" step="2" value="10" class="form-range">
+              </div>
+
+              <div class="control-group checkbox-row">
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="guardBarsCheck">
+                  <span class="checkmark"></span>
+                  Include Guard Bars / Descenders
+                </label>
+              </div>
+
+            </div>
+          </div>
+
+        </aside>
+
+        <!-- MAIN VIEWPORT AREA -->
+        <section class="studio-viewport-container">
+          
+          <!-- VIEWPORT TOOLBAR / STATUS -->
+          <div class="viewport-header">
+            <div class="symbology-info-badge">
+              <span id="activeSymbologyName" class="sym-name">Code 128</span>
+              <span id="activeCategoryBadge" class="sym-cat">1D Linear</span>
+            </div>
+
+            <!-- SCANNABILITY / CONTRAST INDICATOR -->
+            <div class="scannability-indicator" id="scannabilityStatus" title="ISO Optical Scannability Rating based on bar/bg contrast">
+              <span class="scannability-dot dot-good"></span>
+              <span class="scannability-text" id="scannabilityText">Scannability: Excellent</span>
+              <i class="ri-information-line" id="contrastInfoBtn"></i>
+            </div>
+          </div>
+
+          <!-- LIVE CANVAS BOARD -->
+          <div class="viewport-stage" id="viewportStage">
+            <div class="canvas-card" id="canvasCard">
+              <div id="renderErrorAlert" class="render-error-msg hidden">
+                <i class="ri-error-warning-line"></i>
+                <span id="errorText">Render failed</span>
+              </div>
+              <canvas id="barcodeCanvas"></canvas>
+            </div>
+          </div>
+
+          <!-- ACTION BUTTONS TOOLBAR -->
+          <div class="viewport-actions">
+            <div class="action-buttons-group">
+              <button id="downloadPngBtn" class="btn btn-primary">
+                <i class="ri-download-2-line"></i> Download PNG
+              </button>
+              <button id="downloadSvgBtn" class="btn btn-secondary">
+                <i class="ri-file-code-line"></i> Download SVG
+              </button>
+
+              <div class="dropdown-split">
+                <button id="copyClipboardBtn" class="btn btn-outline">
+                  <i class="ri-clipboard-line"></i> Copy Image
+                </button>
+                <button id="copySvgBtn" class="btn btn-outline" title="Copy Raw SVG Code">
+                  <i class="ri-code-s-slash-line"></i> SVG Code
+                </button>
+              </div>
+
+              <button id="saveHistoryBtn" class="btn btn-icon-only" title="Save Barcode to History">
+                <i class="ri-star-line"></i>
+              </button>
+              <button id="openInPrintBtn" class="btn btn-icon-only" title="Send to Print Layout Sheet">
+                <i class="ri-printer-line"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- SYMBOLOGY HELP & RULES FOOTER CARD -->
+          <div class="symbology-guide-card">
+            <div class="guide-header">
+              <i class="ri-book-open-line"></i>
+              <span id="guideTitle">About Code 128</span>
+            </div>
+            <p id="guideDescription">Very popular high-density linear barcode supporting all 128 ASCII characters.</p>
+            <div class="guide-rules">
+              <span class="rule-chip"><i class="ri-shield-check-line"></i> <span id="guideRules">Supports all ASCII characters</span></span>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </div>
+
+
+    <!-- ==================== TAB 2: PRESET TEMPLATES ==================== -->
+    <div class="tab-pane hidden" id="tab-presets">
+      <div class="presets-container">
+        <h2><i class="ri-layout-grid-line"></i> Smart Barcode Presets & Builders</h2>
+        <p class="section-desc">Generate ready-to-use QR codes and retail barcodes using formatted payload generators.</p>
+
+        <div class="preset-cards-grid">
+          
+          <!-- PRESET 1: WiFi QR -->
+          <div class="preset-card">
+            <div class="preset-icon"><i class="ri-wifi-line"></i></div>
+            <h3>WiFi Network Access</h3>
+            <p>Generate a scannable QR Code for smartphones to automatically join a WiFi network.</p>
+            <div class="form-group-sm">
+              <label>Network SSID</label>
+              <input type="text" id="wifiSsid" class="form-input" placeholder="Home_WiFi_5G">
+            </div>
+            <div class="form-group-sm">
+              <label>Password</label>
+              <input type="password" id="wifiPass" class="form-input" placeholder="WPA2 Password">
+            </div>
+            <div class="form-group-sm">
+              <label>Encryption</label>
+              <select id="wifiAuth" class="form-select">
+                <option value="WPA">WPA / WPA2 / WPA3</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">None (Open)</option>
+              </select>
+            </div>
+            <button id="generateWifiBtn" class="btn btn-primary btn-block"><i class="ri-qr-code-line"></i> Generate WiFi QR</button>
+          </div>
+
+          <!-- PRESET 2: vCard Contact QR -->
+          <div class="preset-card">
+            <div class="preset-icon"><i class="ri-contacts-book-line"></i></div>
+            <h3>vCard Contact Info</h3>
+            <p>Generate a digital contact card QR code to instantly import details into phone address books.</p>
+            <div class="form-group-sm">
+              <label>Full Name</label>
+              <input type="text" id="vcardName" class="form-input" placeholder="Jane Doe">
+            </div>
+            <div class="form-group-sm">
+              <label>Phone Number</label>
+              <input type="text" id="vcardPhone" class="form-input" placeholder="+1 (555) 019-2831">
+            </div>
+            <div class="form-group-sm">
+              <label>Email Address</label>
+              <input type="email" id="vcardEmail" class="form-input" placeholder="jane@example.com">
+            </div>
+            <div class="form-group-sm">
+              <label>Company / Title</label>
+              <input type="text" id="vcardOrg" class="form-input" placeholder="Tech Lead, Acme Corp">
+            </div>
+            <button id="generateVcardBtn" class="btn btn-primary btn-block"><i class="ri-qr-code-line"></i> Generate vCard QR</button>
+          </div>
+
+          <!-- PRESET 3: Website URL -->
+          <div class="preset-card">
+            <div class="preset-icon"><i class="ri-global-line"></i></div>
+            <h3>Website Link / URL</h3>
+            <p>Direct users to a website, menu, landing page, or mobile download link.</p>
+            <div class="form-group-sm">
+              <label>Target URL</label>
+              <input type="url" id="urlPresetInput" class="form-input" placeholder="https://example.com/promo">
+            </div>
+            <button id="generateUrlBtn" class="btn btn-primary btn-block"><i class="ri-qr-code-line"></i> Generate URL QR</button>
+          </div>
+
+          <!-- PRESET 4: Product EAN-13 Retail -->
+          <div class="preset-card">
+            <div class="preset-icon"><i class="ri-shopping-cart-line"></i></div>
+            <h3>EAN-13 Retail Product</h3>
+            <p>Calculate valid 13-digit EAN GTIN numbers with automatic checksum verification.</p>
+            <div class="form-group-sm">
+              <label>Country & Manufacturer Prefix + Item (12 Digits)</label>
+              <input type="text" id="ean12Input" class="form-input text-mono" placeholder="590123412345" maxlength="12">
+            </div>
+            <div class="checksum-preview">
+              <span>Calculated Checksum: <strong id="eanChecksumDigit">-</strong></span>
+            </div>
+            <button id="generateEanBtn" class="btn btn-primary btn-block"><i class="ri-barcode-line"></i> Generate EAN-13</button>
+          </div>
+
+          <!-- PRESET 5: Shipping GS1-128 / SSCC -->
+          <div class="preset-card">
+            <div class="preset-icon"><i class="ri-truck-line"></i></div>
+            <h3>Logistics GS1-128 Label</h3>
+            <p>Create supply chain barcodes with GTIN (01), Expiration (17), and Lot/Batch (10) identifiers.</p>
+            <div class="form-group-sm">
+              <label>GTIN (14 Digits)</label>
+              <input type="text" id="gs1Gtin" class="form-input text-mono" placeholder="00312345678906">
+            </div>
+            <div class="form-group-sm">
+              <label>Batch / Lot Number</label>
+              <input type="text" id="gs1Lot" class="form-input text-mono" placeholder="BATCH9942">
+            </div>
+            <div class="form-group-sm">
+              <label>Expiration Date (YYMMDD)</label>
+              <input type="text" id="gs1Exp" class="form-input text-mono" placeholder="271231">
+            </div>
+            <button id="generateGs1Btn" class="btn btn-primary btn-block"><i class="ri-barcode-line"></i> Generate GS1-128</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==================== TAB 3: BATCH GENERATOR ==================== -->
+    <div class="tab-pane hidden" id="tab-batch">
+      <div class="batch-container">
+        <div class="batch-header-bar">
+          <div>
+            <h2><i class="ri-stack-line"></i> Batch Barcode Generator</h2>
+            <p class="section-desc">Generate dozens of barcodes at once from multi-line text or CSV files.</p>
+          </div>
+
+          <div class="batch-actions">
+            <button id="batchProcessBtn" class="btn btn-primary"><i class="ri-play-line"></i> Run Batch Generation</button>
+            <button id="batchDownloadZipBtn" class="btn btn-secondary" disabled><i class="ri-file-zip-line"></i> Download All (PNG)</button>
+          </div>
+        </div>
+
+        <div class="batch-layout">
+          <!-- INPUT COLUMN -->
+          <div class="batch-input-card">
+            <div class="control-group">
+              <label for="batchSymbologySelect"><i class="ri-barcode-line"></i> Symbology for Batch</label>
+              <select id="batchSymbologySelect" class="form-select"></select>
+            </div>
+
+            <div class="control-group">
+              <div class="label-with-action">
+                <label for="batchTextInput"><i class="ri-file-text-line"></i> Input Payloads (1 per line or CSV)</label>
+                <button id="batchLoadSampleBtn" class="btn-link">Load Sample List</button>
+              </div>
+              <textarea id="batchTextInput" class="form-textarea text-mono" rows="12" placeholder="ITEM-001&#10;ITEM-002&#10;ITEM-003&#10;ITEM-004"></textarea>
+            </div>
+          </div>
+
+          <!-- PREVIEW GRID COLUMN -->
+          <div class="batch-results-card">
+            <div class="batch-results-header">
+              <h3>Generated Results (<span id="batchCountNum">0</span>)</h3>
+              <span id="batchProgressText" class="meta-item">Ready</span>
+            </div>
+
+            <div id="batchGrid" class="batch-grid-view">
+              <div class="empty-state">
+                <i class="ri-stack-line"></i>
+                <p>No batch barcodes generated yet. Enter payloads on the left and click "Run Batch Generation".</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ==================== TAB 4: PRINT SHEET ==================== -->
+    <div class="tab-pane hidden" id="tab-print">
+      <div class="print-container">
+        
+        <!-- PRINT SHEET CONTROLS (Hidden during printing) -->
+        <div class="print-controls-bar no-print">
+          <div class="print-config-inputs">
+            <div class="form-group-inline">
+              <label>Paper Format:</label>
+              <select id="printPaperSelect" class="form-select">
+                <option value="a4">A4 (210 x 297 mm)</option>
+                <option value="letter">US Letter (8.5 x 11 in)</option>
+              </select>
+            </div>
+
+            <div class="form-group-inline">
+              <label>Columns:</label>
+              <input type="number" id="printColsInput" min="1" max="6" value="3" class="form-input input-sm">
+            </div>
+
+            <div class="form-group-inline">
+              <label>Rows:</label>
+              <input type="number" id="printRowsInput" min="1" max="12" value="7" class="form-input input-sm">
+            </div>
+
+            <div class="form-group-inline">
+              <label>Repeat Count:</label>
+              <input type="number" id="printRepeatInput" min="1" max="100" value="21" class="form-input input-sm">
+            </div>
+          </div>
+
+          <div class="print-actions">
+            <button id="triggerPrintBtn" class="btn btn-primary"><i class="ri-printer-line"></i> Print Label Sheet</button>
+          </div>
+        </div>
+
+        <!-- PRINTABLE SHEET PREVIEW -->
+        <div class="print-sheet-stage">
+          <div class="print-page-paper" id="printPagePaper">
+            <div class="print-labels-grid" id="printLabelsGrid">
+              <!-- Dynamically populated with barcode cards -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ==================== TAB: AAMVA DL BUILDER (pdf417.pro Style) ==================== -->
+    <div class="tab-pane hidden" id="tab-dlbuilder">
+      <div class="dl-pro-container">
+        
+        <!-- TOP TOOLBAR -->
+        <div class="dl-pro-header">
+          <div class="dl-pro-title">
+            <h2><i class="ri-id-card-line"></i> AAMVA Driver License Barcode Generator (pdf417.pro)</h2>
+            <p class="section-desc">Generate AAMVA PDF417 Driver License barcodes with exact field formats & optical scanner compliance.</p>
+          </div>
+
+          <div class="dl-pro-top-controls">
+            <div class="form-group-inline">
+              <label for="dlStateSelect"><i class="ri-map-pin-line"></i> State / Jurisdiction:</label>
+              <select id="dlStateSelect" class="form-select select-state-highlight"></select>
+            </div>
+            
+            <div class="form-group-inline">
+              <label for="dlVerSelect">Spec:</label>
+              <select id="dlVerSelect" class="form-select select-sm">
+                <option value="08" selected>AAMVA v08</option>
+                <option value="09">AAMVA v09</option>
+                <option value="10">AAMVA v10</option>
+                <option value="05">AAMVA v05</option>
+              </select>
+            </div>
+
+            <button id="loadDlSampleBtn" class="btn btn-secondary" title="Load Sample DL Record Output"><i class="ri-file-text-line"></i> Sample Record</button>
+            <button id="randomizeAllDlBtn" class="btn btn-outline" title="Randomize All Fields"><i class="ri-magic-line"></i> Randomize</button>
+            <button id="clearDlFormBtn" class="btn btn-outline" title="Clear Form Fields"><i class="ri-refresh-line"></i> Clear</button>
+          </div>
+        </div>
+
+        <!-- USER PROVIDED AAMVA v08 FORM CARD -->
+        <div class="card">
+
+          <div class="row row1">
+              <div class="field">
+                  <label>DL Number</label>
+                  <input id="dlNumber" value="D1234567">
+              </div>
+
+              <div class="field">
+                  <label>First name</label>
+                  <input id="firstName" value="John">
+              </div>
+
+              <div class="field">
+                  <label>Last name</label>
+                  <input id="lastName" value="Doe">
+              </div>
+
+              <div class="field">
+                  <label>Middle name</label>
+                  <input id="middleName">
+              </div>
+          </div>
+
+          <div class="row row2">
+              <div class="field">
+                  <label>Address</label>
+                  <input id="address" value="516 Anson Ct">
+              </div>
+
+              <div class="field">
+                  <label>City</label>
+                  <input id="city" value="Rohnert Park">
+              </div>
+
+              <div class="field">
+                  <label>Zip code</label>
+                  <input id="zip" value="875420000">
+              </div>
+
+              <div class="field">
+                  <label>DL Class</label>
+                  <input id="dlClass" value="C">
+              </div>
+
+              <div class="field">
+                  <label>Sex</label>
+                  <select id="sex">
+                      <option value="1">M</option>
+                      <option value="2">F</option>
+                      <option value="9">X</option>
+                  </select>
+              </div>
+
+              <div class="field">
+                  <label>Donor</label>
+                  <select id="donor">
+                      <option>No</option>
+                      <option>Yes</option>
+                  </select>
+              </div>
+          </div>
+
+          <div class="row row3">
+              <div class="field">
+                  <label>Birth date</label>
+                  <input id="birthDate" value="01151970">
+              </div>
+
+              <div class="field">
+                  <label>Issue date</label>
+                  <input id="issueDate" value="11262025">
+              </div>
+
+              <div class="field">
+                  <label>Expiry date</label>
+                  <input id="expiryDate" value="01152030">
+              </div>
+
+              <div class="field">
+                  <label>DD</label>
+                  <input id="dd" value="08/25/202165508/AAFD/26">
+              </div>
+
+              <div class="field">
+                  <label>ICN</label>
+                  <input id="icn" value="21237D12345670401">
+              </div>
+          </div>
+
+          <div class="row row4">
+              <div class="field">
+                  <label>Restrictions</label>
+                  <input id="restrictions" value="NONE">
+              </div>
+
+              <div class="field">
+                  <label>Endorsement</label>
+                  <input id="endorsement" value="NONE">
+              </div>
+
+              <div class="field">
+                  <label>Height (in.)</label>
+                  <div class="input-group">
+                      <input id="height" value="69">
+                      <div class="unit" id="heightUnit">≈175 cm</div>
+                  </div>
+              </div>
+
+              <div class="field">
+                  <label>Weight (lb.)</label>
+                  <div class="input-group">
+                      <input id="weight" value="169">
+                      <div class="unit" id="weightUnit">≈76 kg</div>
+                  </div>
+              </div>
+          </div>
+
+          <div class="row row5">
+              <div class="field">
+                  <label>Name Suffix</label>
+                  <select id="suffix">
+                      <option>NONE</option>
+                      <option>JR</option>
+                      <option>SR</option>
+                      <option>1ST</option>
+                      <option>2ND</option>
+                      <option>3RD</option>
+                      <option>4TH</option>
+                  </select>
+              </div>
+
+              <div class="field">
+                  <label>Limited Term</label>
+                  <select id="limited">
+                      <option>No</option>
+                      <option>Yes</option>
+                  </select>
+              </div>
+
+              <div class="field">
+                  <label>Eye (as on DL)</label>
+                  <select id="eyeDl">
+                      <option value="BRN">BRN (Brown)</option>
+                      <option value="BLU">BLU (Blue)</option>
+                      <option value="BLK">BLK (Black)</option>
+                      <option value="GRN">GRN (Green)</option>
+                      <option value="HAZ">HAZ (Hazel)</option>
+                  </select>
+              </div>
+
+              <div class="field">
+                  <label>Eye (ANSI D-20)</label>
+                  <select id="eyeAnsi">
+                      <option value="BRO">BRO (Brown)</option>
+                      <option value="BLU">BLU (Blue)</option>
+                      <option value="BLK">BLK (Black)</option>
+                      <option value="GRN">GRN (Green)</option>
+                      <option value="HAZ">HAZ (Hazel)</option>
+                  </select>
+              </div>
+
+              <div class="field">
+                  <label>Hair (as on DL)</label>
+                  <select id="hairDl">
+                      <option value="BRN">BRN (Brown)</option>
+                      <option value="BLK">BLK (Black)</option>
+                      <option value="BLN">BLN (Blond)</option>
+                      <option value="GRY">GRY (Gray)</option>
+                      <option value="RED">RED (Red)</option>
+                  </select>
+              </div>
+
+              <div class="field">
+                  <label>Hair (ANSI D-20)</label>
+                  <select id="hairAnsi">
+                      <option value="BRO">BRO (Brown)</option>
+                      <option value="BLK">BLK (Black)</option>
+                      <option value="BLN">BLN (Blond)</option>
+                      <option value="GRY">GRY (Gray)</option>
+                      <option value="RED">RED (Red)</option>
+                  </select>
+              </div>
+          </div>
+
+          <div class="button-area">
+              <button id="dlCreateBtn">Create</button>
+          </div>
+
+          <!-- HIDDEN AUXILIARY CONFIG (For AAMVA compliance) -->
+          <div class="hidden">
+            <input type="text" id="dlIinInput" value="636000">
+            <input type="text" id="dlRealId" value="F">
+            <select id="dlRace"><option value="White" selected>White</option></select>
+            <select id="dlCountry"><option value="USA" selected>USA</option></select>
+          </div>
+
+        </div>
+
+
+        <!-- HIGH DEFINITION PDF417 BARCODE STAGE & DOWNLOAD HUB -->
+        <div class="pro-barcode-output-card">
+          
+          <div class="output-card-header">
+            <div class="output-title">
+              <i class="ri-barcode-box-line"></i>
+              <span>High-Resolution PDF417 Barcode</span>
+            </div>
+            <div class="output-meta-badges">
+              <span class="meta-badge-good"><i class="ri-checkbox-circle-fill"></i> Scannable PDF417</span>
+              <span class="meta-badge-info" id="aamvaByteCount">0 bytes</span>
+            </div>
+          </div>
+
+          <!-- PROMINENT WHITE STAGE CARD WITH CRISP BARCODE -->
+          <div class="pro-canvas-stage">
+            <div class="canvas-center-box" id="dlCanvasBox">
+              <canvas id="dlBarcodeCanvas"></canvas>
+            </div>
+          </div>
+
+          <!-- DOWNLOAD & ACTION BUTTONS TOOLBAR -->
+          <div class="pro-output-actions">
+            <button id="dlDownloadPngBtn" class="btn btn-primary btn-lg">
+              <i class="ri-download-2-fill"></i> Download PNG (High-Res)
+            </button>
+            <button id="dlDownloadSvgBtn" class="btn btn-secondary btn-lg">
+              <i class="ri-file-code-fill"></i> Download Vector SVG
+            </button>
+            <button id="dlCopyImageBtn" class="btn btn-outline">
+              <i class="ri-file-copy-line"></i> Copy Image
+            </button>
+            <button id="dlCopyRawBtn" class="btn btn-outline">
+              <i class="ri-code-s-slash-line"></i> Copy AAMVA String
+            </button>
+          </div>
+
+        </div>
+
+
+        <!-- RAW AAMVA BYTE INSPECTOR & DECODER ACCORDION -->
+        <div class="accordion-item margin-top-lg">
+          <button class="accordion-header">
+            <span><i class="ri-terminal-box-line"></i> Raw AAMVA String Inspector & Decoder</span>
+            <i class="ri-arrow-down-s-line accordion-arrow"></i>
+          </button>
+          <div class="accordion-body">
+            <div class="control-group">
+              <label>Generated AAMVA Byte String (with \n, \r, \x1e control characters):</label>
+              <textarea id="dlRawText" class="form-textarea text-mono" rows="3" readonly></textarea>
+            </div>
+
+            <div class="control-group margin-top-sm">
+              <label>Decode / Parse External Driver License Barcode:</label>
+              <textarea id="parseInputText" class="form-textarea text-mono" rows="2" placeholder="Paste raw @\n\x1e\rANSI... payload here"></textarea>
+              <button id="parseDlBtn" class="btn btn-secondary margin-top-sm"><i class="ri-search-eye-line"></i> Parse DL Payload</button>
+              <div id="parsedFieldsOutput" class="parsed-fields-output hidden"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+
+    <!-- ==================== TAB 5: HISTORY ==================== -->
+    <div class="tab-pane hidden" id="tab-history">
+      <div class="history-container">
+        <div class="history-header-bar">
+          <div>
+            <h2><i class="ri-history-line"></i> Saved Barcode History</h2>
+            <p class="section-desc">Barcodes you create are saved locally for instant access, editing, and downloading.</p>
+          </div>
+          <button id="clearHistoryBtn" class="btn btn-outline-danger"><i class="ri-delete-bin-line"></i> Clear History</button>
+        </div>
+
+        <div id="historyGrid" class="history-grid-view">
+          <div class="empty-state">
+            <i class="ri-history-line"></i>
+            <p>Your history is currently empty. Generate barcodes in the Studio to save them here automatically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FORMAT HELP MODAL -->
+  <div id="helpModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="ri-book-read-line"></i> Barcode Symbologies Reference Guide</h3>
+        <button class="close-modal-btn" id="closeHelpModalBtn"><i class="ri-close-line"></i></button>
+      </div>
+      <div class="modal-body">
+        <p>This software uses <strong>bwip-js</strong> to generate production-ready barcodes. Below is a quick guide to selecting the right barcode symbology for your project:</p>
+
+        <div class="modal-table-wrap">
+          <table class="modal-table">
+            <thead>
+              <tr>
+                <th>Symbology</th>
+                <th>Category</th>
+                <th>Best Used For</th>
+                <th>Data Format Rules</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Code 128</strong></td>
+                <td>1D Linear</td>
+                <td>Shipping, inventory, asset tags, products</td>
+                <td>Full 128 ASCII text & numbers</td>
+              </tr>
+              <tr>
+                <td><strong>QR Code</strong></td>
+                <td>2D Matrix</td>
+                <td>Mobile scanning, website links, WiFi, vCards</td>
+                <td>UTF-8 text, URLs, binary data</td>
+              </tr>
+              <tr>
+                <td><strong>EAN-13</strong></td>
+                <td>Retail</td>
+                <td>International retail consumer items</td>
+                <td>Exact 12 or 13 numeric digits</td>
+              </tr>
+              <tr>
+                <td><strong>UPC-A</strong></td>
+                <td>Retail</td>
+                <td>North American retail checkout</td>
+                <td>Exact 11 or 12 numeric digits</td>
+              </tr>
+              <tr>
+                <td><strong>Data Matrix</strong></td>
+                <td>2D Matrix</td>
+                <td>Small parts, PCBs, pharmaceutical packages</td>
+                <td>High-density ASCII & binary data</td>
+              </tr>
+              <tr>
+                <td><strong>PDF417</strong></td>
+                <td>2D Stacked</td>
+                <td>Driver licenses, government IDs, boarding passes</td>
+                <td>Large payload text & binary data</td>
+              </tr>
+              <tr>
+                <td><strong>ITF-14</strong></td>
+                <td>Retail/Carton</td>
+                <td>Master shipping cartons, outer boxes</td>
+                <td>Exact 14 numeric digits with frame</td>
+              </tr>
+              <tr>
+                <td><strong>GS1-128</strong></td>
+                <td>Logistics</td>
+                <td>Supply chain containers with batch & exp date</td>
+                <td>GS1 AIs like (01)GTIN(10)LOT(17)EXP</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="closeHelpModalBtn2">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT -->
+  <script src="js/barcode-types.js"></script>
+  <script src="js/aamva-dl.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
+
