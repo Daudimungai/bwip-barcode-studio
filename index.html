@@ -21,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
   <!-- Application Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=1.0.3">
+  <link rel="stylesheet" href="styles.css?v=1.0.4">
 </head>
 <body class="theme-dark">
 
@@ -55,6 +55,9 @@
       <button class="nav-tab" data-tab="dlbuilder">
         <i class="ri-id-card-line"></i> AAMVA DL Builder
       </button>
+      <button class="nav-tab" data-tab="decoder">
+        <i class="ri-scan-line"></i> Decoder
+      </button>
       <button class="nav-tab" data-tab="history">
         <i class="ri-history-line"></i> History <span class="badge-count" id="historyCountBadge">0</span>
       </button>
@@ -81,8 +84,25 @@
         <!-- SIDEBAR CONTROLS -->
         <aside class="studio-sidebar">
           <div class="sidebar-header">
-            <h3><i class="ri-sliders-line"></i> Barcode Options</h3>
+            <h3><i class="ri-sliders-line"></i> Studio Control Panel</h3>
             <button id="resetDefaultsBtn" class="btn-text-sm" title="Reset controls to default"><i class="ri-refresh-line"></i> Reset</button>
+          </div>
+
+          <!-- UPLOAD & EDIT EXISTING QR / BARCODE CARD -->
+          <div class="studio-upload-card">
+            <div class="studio-upload-header">
+              <i class="ri-upload-cloud-2-line"></i>
+              <span>Upload QR Code to Edit</span>
+            </div>
+            <label for="studioImportFileInput" id="studioImportDropZone" class="studio-upload-box">
+              <div class="studio-upload-icon"><i class="ri-qr-scan-2-line"></i></div>
+              <div class="studio-upload-text">
+                <strong>Drop or Click to Upload Image</strong>
+                <span>Auto-detects format, text &amp; colors</span>
+              </div>
+            </label>
+            <input type="file" id="studioImportFileInput" accept="image/*" style="display:none">
+            <div id="studioImportStatus" class="studio-import-status hidden"></div>
           </div>
 
           <!-- SYMBOLOGY SELECTOR -->
@@ -105,6 +125,15 @@
               <button id="sampleDataBtn" class="btn-link"><i class="ri-magic-line"></i> Sample</button>
             </div>
             <textarea id="barcodeInput" class="form-textarea" rows="3" placeholder="Enter text or numbers to encode..."></textarea>
+            
+            <!-- PAYLOAD PRESET CHIPS -->
+            <div class="payload-preset-chips">
+              <button class="payload-chip" data-preset="url"><i class="ri-links-line"></i> URL</button>
+              <button class="payload-chip" data-preset="wifi"><i class="ri-wifi-line"></i> WiFi</button>
+              <button class="payload-chip" data-preset="vcard"><i class="ri-contacts-book-line"></i> vCard</button>
+              <button class="payload-chip" data-preset="email"><i class="ri-mail-line"></i> Email</button>
+            </div>
+
             <div class="input-meta">
               <span id="charCount" class="meta-item">Length: 0</span>
               <span id="validationStatus" class="meta-item status-valid"><i class="ri-checkbox-circle-line"></i> Valid</span>
@@ -260,11 +289,20 @@
               <span id="activeCategoryBadge" class="sym-cat">1D Linear</span>
             </div>
 
-            <!-- SCANNABILITY / CONTRAST INDICATOR -->
-            <div class="scannability-indicator" id="scannabilityStatus" title="ISO Optical Scannability Rating based on bar/bg contrast">
-              <span class="scannability-dot dot-good"></span>
-              <span class="scannability-text" id="scannabilityText">Scannability: Excellent</span>
-              <i class="ri-information-line" id="contrastInfoBtn"></i>
+            <div class="viewport-stage-tools">
+              <!-- STAGE BACKGROUND THEMES -->
+              <div class="stage-theme-group" id="stageBgToggles" title="Stage background theme">
+                <button class="stage-theme-btn active" data-bg="checker" title="Checkerboard (Transparent check)"><i class="ri-grid-line"></i></button>
+                <button class="stage-theme-btn" data-bg="dark" title="Dark Stage"><i class="ri-moon-line"></i></button>
+                <button class="stage-theme-btn" data-bg="light" title="Light Stage"><i class="ri-sun-line"></i></button>
+              </div>
+
+              <!-- SCANNABILITY / CONTRAST INDICATOR -->
+              <div class="scannability-indicator" id="scannabilityStatus" title="ISO Optical Scannability Rating based on bar/bg contrast">
+                <span class="scannability-dot dot-good"></span>
+                <span class="scannability-text" id="scannabilityText">Scannability: Excellent</span>
+                <i class="ri-information-line" id="contrastInfoBtn"></i>
+              </div>
             </div>
           </div>
 
@@ -572,34 +610,34 @@
 
           <div class="row row1">
               <div class="field">
-                  <label>DL Number</label>
+                  <label>DL Number <button class="pro-calc-btn" data-calc="dlNum" title="Auto-generate DL number"><i class="ri-calculator-line"></i></button></label>
                   <input id="dlNumber" value="D1234567">
               </div>
 
               <div class="field">
-                  <label>First name</label>
+                  <label>First name <button class="pro-calc-btn" data-calc="firstName" title="Generate random first name"><i class="ri-calculator-line"></i></button></label>
                   <input id="firstName" value="John">
               </div>
 
               <div class="field">
-                  <label>Last name</label>
+                  <label>Last name <button class="pro-calc-btn" data-calc="lastName" title="Generate random last name"><i class="ri-calculator-line"></i></button></label>
                   <input id="lastName" value="Doe">
               </div>
 
               <div class="field">
-                  <label>Middle name</label>
+                  <label>Middle name <button class="pro-calc-btn" data-calc="middleName" title="Generate random middle name"><i class="ri-calculator-line"></i></button></label>
                   <input id="middleName">
               </div>
           </div>
 
           <div class="row row2">
               <div class="field">
-                  <label>Address</label>
+                  <label>Address <button class="pro-calc-btn" data-calc="address" title="Generate random street address"><i class="ri-calculator-line"></i></button></label>
                   <input id="address" value="516 Anson Ct">
               </div>
 
               <div class="field">
-                  <label>City</label>
+                  <label>City <button class="pro-calc-btn" data-calc="cityZip" title="Generate state-matched city & zip"><i class="ri-calculator-line"></i></button></label>
                   <input id="city" value="Rohnert Park">
               </div>
 
@@ -633,27 +671,27 @@
 
           <div class="row row3">
               <div class="field">
-                  <label>Birth date</label>
-                  <input id="birthDate" value="01151970">
+                  <label>Birth date <button class="pro-calc-btn" data-calc="dob" title="Generate random date of birth"><i class="ri-calculator-line"></i></button></label>
+                  <input id="birthDate" value="01151970" placeholder="MMDDYYYY">
               </div>
 
               <div class="field">
-                  <label>Issue date</label>
-                  <input id="issueDate" value="11262025">
+                  <label>Issue date <button class="pro-calc-btn" data-calc="issueDate" title="Auto-generate issue date"><i class="ri-calculator-line"></i></button></label>
+                  <input id="issueDate" value="11262025" placeholder="MMDDYYYY">
               </div>
 
               <div class="field">
-                  <label>Expiry date</label>
-                  <input id="expiryDate" value="01152030">
+                  <label>Expiry date <button class="pro-calc-btn" data-calc="expDate" title="Calculate expiry from DOB + renewal period"><i class="ri-calculator-line"></i></button></label>
+                  <input id="expiryDate" value="01152030" placeholder="MMDDYYYY">
               </div>
 
               <div class="field">
-                  <label>DD</label>
+                  <label>DD <span class="field-hint" title="Document Discriminator — calculated from state, DL#, and issue date">ℹ️</span> <button class="pro-calc-btn" data-calc="dd" title="Auto-calculate Document Discriminator"><i class="ri-calculator-line"></i></button></label>
                   <input id="dd" value="08/25/202165508/AAFD/26">
               </div>
 
               <div class="field">
-                  <label>ICN</label>
+                  <label>ICN <span class="field-hint" title="Inventory Control Number — calculated from state IIN + DL number">ℹ️</span> <button class="pro-calc-btn" data-calc="icn" title="Auto-calculate Inventory Control Number"><i class="ri-calculator-line"></i></button></label>
                   <input id="icn" value="21237D12345670401">
               </div>
           </div>
@@ -742,13 +780,16 @@
               </div>
 
               <div class="field">
-                  <label>Hair (ANSI D-20)</label>
-                  <select id="hairAnsi">
-                      <option value="BRO">BRO (Brown)</option>
-                      <option value="BLK">BLK (Black)</option>
-                      <option value="BLN">BLN (Blond)</option>
-                      <option value="GRY">GRY (Gray)</option>
-                      <option value="RED">RED (Red)</option>
+                  <label>Race (ANSI D-20)</label>
+                  <select id="raceAnsi">
+                      <option value="Black">Black</option>
+                      <option value="White">White</option>
+                      <option value="Asian">Asian</option>
+                      <option value="American Indian/Alaskan Native">American Indian/Alaskan Native</option>
+                      <option value="Hispanic/Latino">Hispanic/Latino</option>
+                      <option value="Pacific Islander">Pacific Islander</option>
+                      <option value="Other">Other</option>
+                      <option value="Unknown">Unknown</option>
                   </select>
               </div>
           </div>
@@ -761,7 +802,6 @@
           <div class="hidden">
             <input type="text" id="dlIinInput" value="636000">
             <input type="text" id="dlRealId" value="F">
-            <select id="dlRace"><option value="White" selected>White</option></select>
             <select id="dlCountry"><option value="USA" selected>USA</option></select>
           </div>
 
@@ -832,6 +872,172 @@
       </div>
     </div>
 
+
+
+    <!-- ==================== TAB 6: DECODER ==================== -->
+    <div class="tab-pane hidden" id="tab-decoder">
+      <div class="decoder-container">
+
+        <!-- PAGE HEADER -->
+        <div class="decoder-page-header">
+          <div class="decoder-page-title">
+            <div class="decoder-title-icon"><i class="ri-scan-line"></i></div>
+            <div>
+              <h2>Barcode &amp; QR Decoder</h2>
+              <p class="section-desc">Decode any barcode or QR code from an image, camera, or clipboard. Powered by <strong>ZXing</strong> — supports 15+ symbologies.</p>
+            </div>
+          </div>
+          <div class="decoder-status-pill" id="decodeLoadingSpinner" style="display:none">
+            <span class="spinner-ring"></span> Decoding…
+          </div>
+        </div>
+
+        <div class="decoder-main-grid">
+
+          <!-- ── LEFT COLUMN: Input Methods ─────────────────────────── -->
+          <div class="decoder-inputs-col">
+
+            <!-- IMAGE UPLOAD CARD -->
+            <div class="decoder-card">
+              <div class="decoder-card-header">
+                <i class="ri-image-line"></i>
+                <span>Upload / Drop / Paste Image</span>
+              </div>
+
+              <label for="decodeFileInput" id="decodeUploadZone" class="decode-drop-zone">
+                <div id="decodeUploadPlaceholder" class="drop-zone-inner">
+                  <div class="drop-zone-icon"><i class="ri-upload-cloud-2-line"></i></div>
+                  <p class="drop-zone-title">Drop an image here</p>
+                  <p class="drop-zone-hint">or click to browse &nbsp;·&nbsp; <kbd>Ctrl+V</kbd> to paste</p>
+                  <p class="drop-zone-formats">PNG · JPG · GIF · WEBP · BMP</p>
+                </div>
+                <div class="decode-preview-wrap hidden" id="decodePreviewWrap">
+                  <img id="decodePreviewImg" class="decode-preview-img" alt="Preview" />
+                  <canvas id="decodeOverlayCanvas" class="decode-overlay-canvas"></canvas>
+                </div>
+              </label>
+
+              <input type="file" id="decodeFileInput" accept="image/*" style="display:none">
+
+              <div class="decode-img-actions">
+                <div style="display:flex;gap:8px;align-items:center">
+                  <button id="decodeClearImageBtn" class="btn btn-outline btn-sm">
+                    <i class="ri-delete-bin-line"></i> Clear Image
+                  </button>
+                  <button id="decodeAiScanBtn" class="btn btn-secondary btn-sm" title="Use Free AI Vision to scan difficult/damaged driver license barcodes">
+                    <i class="ri-sparkling-fill" style="color:#f59e0b"></i> AI Vision Assist
+                  </button>
+                </div>
+                <span class="decode-paste-hint"><i class="ri-clipboard-line"></i> Ctrl+V pastes screenshot</span>
+              </div>
+            </div>
+
+            <!-- LIVE CAMERA CARD -->
+            <div class="decoder-card">
+              <div class="decoder-card-header">
+                <i class="ri-camera-line"></i>
+                <span>Live Camera Scanner</span>
+              </div>
+
+              <div class="decode-camera-zone">
+                <div id="decodeCameraPlaceholder" class="camera-placeholder">
+                  <div class="camera-placeholder-icon"><i class="ri-camera-off-line"></i></div>
+                  <p>Camera not started</p>
+                  <p class="drop-zone-hint">Point your camera at a barcode to scan in real-time</p>
+                </div>
+                <video id="decodeCameraPreview" class="decode-camera-video hidden" autoplay muted playsinline></video>
+                <div id="decodeCameraScanOverlay" class="camera-scan-overlay hidden">
+                  <div class="camera-scan-line"></div>
+                </div>
+              </div>
+
+              <div id="decodeCameraResultChip" class="camera-result-chip hidden"></div>
+
+              <div class="decode-camera-actions">
+                <button id="decodeStartCameraBtn" class="btn btn-primary">
+                  <i class="ri-camera-line"></i> Start Camera
+                </button>
+                <button id="decodeStopCameraBtn" class="btn btn-outline hidden">
+                  <i class="ri-stop-circle-line"></i> Stop Camera
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ── RIGHT COLUMN: Result ────────────────────────────────── -->
+          <div class="decoder-result-col">
+
+            <!-- ERROR BANNER -->
+            <div id="decodeError" class="decode-error-banner hidden"></div>
+
+            <!-- EMPTY STATE -->
+            <div id="decodeResultEmpty" class="decode-result-empty">
+              <div class="decode-result-empty-icon"><i class="ri-barcode-box-line"></i></div>
+              <p>Upload an image or start the camera to decode a barcode</p>
+              <p class="drop-zone-hint">Supports QR Code · PDF417 · Data Matrix · Code 128 · EAN · UPC · Aztec &amp; more</p>
+            </div>
+
+            <!-- RESULT PANEL -->
+            <div id="decodeResultPanel" class="decode-result-panel hidden">
+
+              <div class="decode-result-header">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span id="decodeFormatBadge" class="decode-format-badge"></span>
+                  <span id="decodeEnhanceBadge" class="decode-enhancement-badge hidden"></span>
+                </div>
+                <div class="decode-result-meta">
+                  <span id="decodeTypeChip" class="decode-type-chip"></span>
+                  <span id="decodeCharCount" class="decode-char-count"></span>
+                </div>
+              </div>
+
+              <div class="decode-result-text-box">
+                <pre id="decodeResultText" class="decode-result-text"></pre>
+              </div>
+
+              <div class="decode-result-actions">
+                <button id="decodeCopyRawBtn" class="btn btn-primary btn-sm">
+                  <i class="ri-clipboard-line"></i> Copy Text
+                </button>
+                <a id="decodeResultLink" class="btn btn-secondary btn-sm hidden" target="_blank" rel="noopener">
+                  <i class="ri-external-link-line"></i> Open URL
+                </a>
+              </div>
+
+              <!-- AAMVA DL PARSED FIELDS -->
+              <div id="decodeAamvaSection" class="decode-aamva-section hidden">
+                <div class="decode-aamva-header">
+                  <i class="ri-id-card-line"></i>
+                  <span>AAMVA Driver License Fields</span>
+                  <span class="aamva-parsed-badge">Parsed</span>
+                </div>
+                <div id="decodeAamvaGrid" class="decode-aamva-grid"></div>
+              </div>
+
+            </div>
+
+            <!-- SCAN HISTORY -->
+            <div class="decoder-card decode-history-card">
+              <div class="decoder-card-header">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <i class="ri-history-line"></i>
+                  <span>Decode History</span>
+                </div>
+                <button id="clearDecodeHistBtn" class="btn-text-sm">
+                  <i class="ri-delete-bin-line"></i> Clear
+                </button>
+              </div>
+              <div id="decodeHistoryList" class="decode-history-list">
+                <p class="decode-hist-empty">No scans yet.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
 
 
     <!-- ==================== TAB 5: HISTORY ==================== -->
@@ -935,10 +1141,71 @@
     </div>
   </div>
 
+  <!-- AI VISION ASSIST MODAL -->
+  <div class="modal-backdrop hidden" id="aiVisionModal">
+    <div class="modal-dialog" style="max-width: 540px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;color:#f59e0b;font-size:20px;">
+            <i class="ri-sparkling-fill"></i>
+          </div>
+          <div>
+            <h3 style="font-size:16px;margin:0">Free AI Vision Scanner</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin:0">Analyze degraded DL barcodes &amp; IDs with Google Gemini Vision</p>
+          </div>
+        </div>
+        <button class="icon-btn-sm" id="closeAiModalBtn"><i class="ri-close-line"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:14px;">
+          For screenshots of driver's licenses with glare, low contrast, skewed angles, or complex background artwork, <strong>Google Gemini Flash</strong> analyzes the barcode lines with multimodal AI to reconstruct the exact AAMVA payload.
+        </p>
+
+        <div class="field" style="margin-bottom:14px;">
+          <label style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;margin-bottom:6px;">
+            <span>Gemini API Key (100% Free Forever)</span>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--accent-primary);text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:3px;">
+              Get free key <i class="ri-external-link-line"></i>
+            </a>
+          </label>
+          <input type="password" id="geminiApiKeyInput" class="form-input" placeholder="Paste your AI Studio key (AIzaSy...)" style="width:100%;font-family:var(--font-mono);font-size:12px;" />
+          <span style="font-size:11px;color:var(--text-muted);display:block;margin-top:5px;">
+            <i class="ri-shield-check-line" style="color:#10b981"></i> Stored strictly in your browser's localStorage. Zero backend storage.
+          </span>
+        </div>
+
+        <div id="aiScanProgress" class="hidden" style="padding:12px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:var(--radius-md);font-size:13px;color:var(--accent-primary);display:flex;align-items:center;gap:10px;">
+          <span class="spinner-ring"></span>
+          <span>AI is analyzing driver's license barcode lines &amp; extracting AAMVA data…</span>
+        </div>
+        <div id="aiScanError" class="decode-error-banner hidden" style="margin-top:10px;"></div>
+      </div>
+      <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn btn-outline" id="cancelAiModalBtn">Cancel</button>
+        <button class="btn btn-primary" id="runAiScanBtn">
+          <i class="ri-sparkling-fill"></i> Run AI Deep Scan
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- APPLICATION JAVASCRIPT -->
   <script src="js/barcode-types.js"></script>
   <script src="js/aamva-dl.js"></script>
   <script src="js/app.js"></script>
+
+  <!-- ZXing Browser Decoder (UMD) -->
+  <script src="js/vendor/zxing-library.min.js"
+          onerror="this.onerror=null;this.src='https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js'"></script>
+  <!-- jsQR resilient QR engine for screenshots, dark mode & noisy backgrounds -->
+  <script src="/node_modules/jsqr/dist/jsQR.js"
+          onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'"></script>
+  <script src="js/decoder.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof initDecoder === 'function') initDecoder();
+    });
+  </script>
 </body>
 </html>
 

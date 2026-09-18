@@ -438,6 +438,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Preset Generators
     bindPresetEvents();
 
+    // Studio Upload & Edit Import Events
+    bindStudioImportEvents();
+
     // Batch Generator Events
     bindBatchEvents();
 
@@ -797,6 +800,21 @@ document.addEventListener('DOMContentLoaded', () => {
       `<option value="${j.code}" data-iin="${j.iin}" ${j.code === 'CA' ? 'selected' : ''}>${j.name} (${j.code})</option>`
     ).join('');
 
+    // Initialize IIN based on selected state
+    const initialOpt = dlStateSelect.options[dlStateSelect.selectedIndex];
+    if (initialOpt && document.getElementById('dlIinInput')) {
+      document.getElementById('dlIinInput').value = initialOpt.getAttribute('data-iin') || '636000';
+    }
+
+    // State change listener: updates IIN and re-renders barcode
+    dlStateSelect.addEventListener('change', () => {
+      const opt = dlStateSelect.options[dlStateSelect.selectedIndex];
+      if (opt && document.getElementById('dlIinInput')) {
+        document.getElementById('dlIinInput').value = opt.getAttribute('data-iin') || '636000';
+      }
+      renderDLBarcode();
+    });
+
     // Height & Weight Unit Conversion Display Updates
     const dlHeightEl = document.getElementById('height') || document.getElementById('dlHeight');
     const heightUnitLabel = document.getElementById('heightUnit') || document.getElementById('heightCmLabel');
@@ -831,11 +849,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Form inputs change listener (User's Exact IDs)
     const dlInputs = [
-      'dlVerSelect', 'dlNumber', 'firstName', 'lastName', 'middleName', 'suffix',
+      'dlStateSelect', 'dlVerSelect', 'dlNumber', 'firstName', 'lastName', 'middleName', 'suffix',
       'address', 'city', 'zip', 'dlClass', 'sex', 'donor', 'birthDate',
       'issueDate', 'expiryDate', 'height', 'weight', 'restrictions',
       'endorsement', 'dd', 'icn', 'limited', 'eyeDl', 'eyeAnsi',
-      'hairDl', 'hairAnsi', 'dlRace', 'dlRealId', 'dlCountry'
+      'hairDl', 'raceAnsi', 'dlRealId', 'dlCountry'
     ];
 
     dlInputs.forEach(id => {
@@ -843,22 +861,59 @@ document.addEventListener('DOMContentLoaded', () => {
       if (el) el.addEventListener('input', renderDLBarcode);
     });
 
-    // Calculator buttons randomizer listeners
+    // Intelligent Calculator Buttons randomizer listeners (pdf417.pro parity)
     document.querySelectorAll('.pro-calc-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
         const type = btn.getAttribute('data-calc');
-        if (type === 'dlNum') (document.getElementById('dlNumber') || document.getElementById('dlLicenseNum')).value = getRandomDLNum();
-        if (type === 'firstName') (document.getElementById('firstName') || document.getElementById('dlFirstName')).value = getRandomFirstName();
-        if (type === 'lastName') (document.getElementById('lastName') || document.getElementById('dlLastName')).value = getRandomLastName();
-        if (type === 'middleName') (document.getElementById('middleName') || document.getElementById('dlMiddleName')).value = getRandomMiddleName();
-        if (type === 'dob') (document.getElementById('birthDate') || document.getElementById('dlDob')).value = getRandomDOB();
-        if (type === 'issueDate') (document.getElementById('issueDate') || document.getElementById('dlIssueDate')).value = getRandomIssueDate();
-        if (type === 'expDate') (document.getElementById('expiryDate') || document.getElementById('dlExpDate')).value = getRandomExpDate((document.getElementById('birthDate') || document.getElementById('dlDob')).value);
-        if (type === 'dd') (document.getElementById('dd') || document.getElementById('dlDiscriminator')).value = getRandomDD();
-        if (type === 'icn') (document.getElementById('icn') || document.getElementById('dlInventory')).value = getRandomICN((document.getElementById('dlNumber') || document.getElementById('dlLicenseNum')).value);
+        const stateSelect = document.getElementById('dlStateSelect');
+        const stateCode = stateSelect ? stateSelect.value : 'CA';
+        const iin = (document.getElementById('dlIinInput')?.value) || '636000';
+        const sex = (document.getElementById('sex')?.value) || '1';
+        const dob = (document.getElementById('birthDate') || document.getElementById('dlDob'))?.value || '';
+        const issueDate = (document.getElementById('issueDate') || document.getElementById('dlIssueDate'))?.value || '';
+        const dlNum = (document.getElementById('dlNumber') || document.getElementById('dlLicenseNum'))?.value || '';
+
+        if (type === 'dlNum') {
+          const el = document.getElementById('dlNumber') || document.getElementById('dlLicenseNum');
+          if (el) el.value = getRandomDLNum(stateCode);
+        } else if (type === 'firstName') {
+          const el = document.getElementById('firstName') || document.getElementById('dlFirstName');
+          if (el) el.value = getRandomFirstName(sex);
+        } else if (type === 'lastName') {
+          const el = document.getElementById('lastName') || document.getElementById('dlLastName');
+          if (el) el.value = getRandomLastName();
+        } else if (type === 'middleName') {
+          const el = document.getElementById('middleName') || document.getElementById('dlMiddleName');
+          if (el) el.value = getRandomMiddleName();
+        } else if (type === 'dob') {
+          const el = document.getElementById('birthDate') || document.getElementById('dlDob');
+          if (el) el.value = getRandomDOB();
+        } else if (type === 'issueDate') {
+          const el = document.getElementById('issueDate') || document.getElementById('dlIssueDate');
+          if (el) el.value = getRandomIssueDate();
+        } else if (type === 'expDate') {
+          const el = document.getElementById('expiryDate') || document.getElementById('dlExpDate');
+          if (el) el.value = getRandomExpDate(dob, stateCode, issueDate);
+        } else if (type === 'dd') {
+          const el = document.getElementById('dd') || document.getElementById('dlDiscriminator');
+          if (el) el.value = getRandomDD(issueDate, iin, dlNum);
+        } else if (type === 'icn') {
+          const el = document.getElementById('icn') || document.getElementById('dlInventory');
+          if (el) el.value = getRandomICN(dlNum, iin, issueDate);
+        } else if (type === 'address') {
+          const el = document.getElementById('address') || document.getElementById('dlStreet');
+          if (el) el.value = getRandomAddress();
+        } else if (type === 'cityZip') {
+          const cz = getRandomCityZip(stateCode);
+          const cityEl = document.getElementById('city') || document.getElementById('dlCity');
+          const zipEl = document.getElementById('zip') || document.getElementById('dlZip');
+          if (cityEl) cityEl.value = cz[0];
+          if (zipEl) zipEl.value = cz[1];
+        }
 
         renderDLBarcode();
-        showToast('Generated random field value!');
+        showToast('Generated realistic ' + type + ' value!');
       });
     });
 
@@ -936,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setVal('eyeDl', s.eyeAsOnDl);
     setVal('eyeAnsi', s.eyeColor);
     setVal('hairDl', s.hairAsOnDl);
-    setVal('hairAnsi', s.hairColor);
+    setVal('raceAnsi', s.race);
 
     (document.getElementById('height') || document.getElementById('dlHeight'))?.dispatchEvent(new Event('input'));
     (document.getElementById('weight') || document.getElementById('dlWeight'))?.dispatchEvent(new Event('input'));
@@ -968,14 +1023,14 @@ document.addEventListener('DOMContentLoaded', () => {
       dob: getVal('birthDate', getVal('dlDob', '01151970')),
       sex: getVal('sex', '1'),
       donor: getVal('donor', 'No'),
-      race: getVal('dlRace', 'White'),
       heightInches: getVal('height', getVal('dlHeight', '69')),
       weightLbs: getVal('weight', getVal('dlWeight', '169')),
       limitedTerm: getVal('limited', 'No'),
       eyeAsOnDl: getVal('eyeDl', 'BRN'),
       eyeColor: getVal('eyeAnsi', getVal('dlEyeColor', 'BRO')),
       hairAsOnDl: getVal('hairDl', 'BRN'),
-      hairColor: getVal('hairAnsi', getVal('dlHairColor', 'BRO')),
+      hairColor: getVal('hairDl', 'BRO'),
+      race: getVal('raceAnsi', 'Black'),
       issueDate: getVal('issueDate', getVal('dlIssueDate', '11262025')),
       expDate: getVal('expiryDate', getVal('dlExpDate', '01152030')),
       vehicleClass: getVal('dlClass', 'C'),
@@ -1059,36 +1114,84 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function randomizeAllDLFields() {
-    document.getElementById('dlLicenseNum').value = getRandomDLNum();
-    document.getElementById('dlFirstName').value = getRandomFirstName();
-    document.getElementById('dlLastName').value = getRandomLastName();
-    document.getElementById('dlMiddleName').value = getRandomMiddleName();
-    document.getElementById('dlDob').value = getRandomDOB();
-    document.getElementById('dlIssueDate').value = getRandomIssueDate();
-    document.getElementById('dlExpDate').value = getRandomExpDate(document.getElementById('dlDob').value);
-    document.getElementById('dlDiscriminator').value = getRandomDD();
-    document.getElementById('dlInventory').value = getRandomICN(document.getElementById('dlLicenseNum').value);
-    document.getElementById('dlHeight').value = Math.floor(60 + Math.random() * 18).toString();
-    document.getElementById('dlWeight').value = Math.floor(120 + Math.random() * 100).toString();
+    const stateSelect = document.getElementById('dlStateSelect');
+    const state = stateSelect ? stateSelect.value : 'CA';
+    const opt = stateSelect ? stateSelect.options[stateSelect.selectedIndex] : null;
+    const iin = opt ? (opt.getAttribute('data-iin') || '636000') : '636000';
+    if (document.getElementById('dlIinInput')) {
+      document.getElementById('dlIinInput').value = iin;
+    }
 
-    document.getElementById('dlHeight')?.dispatchEvent(new Event('input'));
-    document.getElementById('dlWeight')?.dispatchEvent(new Event('input'));
+    const sex = Math.random() > 0.5 ? '1' : '2';
+    const dob = getRandomDOB();
+    const issueDate = getRandomIssueDate();
+    const expDate = getRandomExpDate(dob, state, issueDate);
+    const dlNum = getRandomDLNum(state);
+    const dd = getRandomDD(issueDate, iin, dlNum);
+    const icn = getRandomICN(dlNum, iin, issueDate);
+    const cz = getRandomCityZip(state);
+
+    const setVal = (id1, id2, val) => {
+      const el = document.getElementById(id1) || document.getElementById(id2);
+      if (el) el.value = val;
+    };
+
+    setVal('sex', 'dlSex', sex);
+    setVal('dlNumber', 'dlLicenseNum', dlNum);
+    setVal('firstName', 'dlFirstName', getRandomFirstName(sex));
+    setVal('lastName', 'dlLastName', getRandomLastName());
+    setVal('middleName', 'dlMiddleName', getRandomMiddleName());
+    setVal('birthDate', 'dlDob', dob);
+    setVal('issueDate', 'dlIssueDate', issueDate);
+    setVal('expiryDate', 'dlExpDate', expDate);
+    setVal('dd', 'dlDiscriminator', dd);
+    setVal('icn', 'dlInventory', icn);
+    setVal('address', 'dlStreet', getRandomAddress());
+    setVal('city', 'dlCity', cz[0]);
+    setVal('zip', 'dlZip', cz[1]);
+    setVal('height', 'dlHeight', String(Math.floor(62 + Math.random() * 14)));
+    setVal('weight', 'dlWeight', String(Math.floor(130 + Math.random() * 80)));
+    setVal('donor', 'dlDonor', Math.random() > 0.4 ? 'Yes' : 'No');
+    setVal('restrictions', 'dlRestrictions', 'NONE');
+    setVal('endorsement', 'dlEndorsements', 'NONE');
+
+    (document.getElementById('height') || document.getElementById('dlHeight'))?.dispatchEvent(new Event('input'));
+    (document.getElementById('weight') || document.getElementById('dlWeight'))?.dispatchEvent(new Event('input'));
 
     renderDLBarcode();
-    showToast('Randomized all DL barcode fields!');
+    showToast(`Generated complete ${state} Driver License record!`);
   }
 
   function clearDLForm() {
-    ['dlLicenseNum', 'dlFirstName', 'dlLastName', 'dlMiddleName', 'dlStreet', 'dlCity', 'dlZip', 'dlDob', 'dlIssueDate', 'dlExpDate', 'dlHeight', 'dlWeight', 'dlRestrictions', 'dlEndorsements', 'dlDiscriminator', 'dlInventory'].forEach(id => {
-      const el = document.getElementById(id);
+    const fieldPairs = [
+      ['dlNumber', 'dlLicenseNum'],
+      ['firstName', 'dlFirstName'],
+      ['lastName', 'dlLastName'],
+      ['middleName', 'dlMiddleName'],
+      ['address', 'dlStreet'],
+      ['city', 'dlCity'],
+      ['zip', 'dlZip'],
+      ['birthDate', 'dlDob'],
+      ['issueDate', 'dlIssueDate'],
+      ['expiryDate', 'dlExpDate'],
+      ['dd', 'dlDiscriminator'],
+      ['icn', 'dlInventory'],
+      ['restrictions', 'dlRestrictions'],
+      ['endorsement', 'dlEndorsements'],
+      ['height', 'dlHeight'],
+      ['weight', 'dlWeight']
+    ];
+
+    fieldPairs.forEach(([id1, id2]) => {
+      const el = document.getElementById(id1) || document.getElementById(id2);
       if (el) el.value = '';
     });
 
-    document.getElementById('dlHeight')?.dispatchEvent(new Event('input'));
-    document.getElementById('dlWeight')?.dispatchEvent(new Event('input'));
+    (document.getElementById('height') || document.getElementById('dlHeight'))?.dispatchEvent(new Event('input'));
+    (document.getElementById('weight') || document.getElementById('dlWeight'))?.dispatchEvent(new Event('input'));
 
     renderDLBarcode();
-    showToast('Cleared form fields');
+    showToast('Cleared all Driver License form fields');
   }
 
   function copyRawAAMVA() {
@@ -1178,6 +1281,195 @@ document.addEventListener('DOMContentLoaded', () => {
     html += `</table>`;
     outputDiv.innerHTML = html;
     outputDiv.classList.remove('hidden');
+  }
+
+  // --- STUDIO UPLOAD & EDIT EXISTING QR / BARCODE ---
+  function bindStudioImportEvents() {
+    const importFileInput = document.getElementById('studioImportFileInput');
+    const importDropZone = document.getElementById('studioImportDropZone');
+
+    if (!importFileInput || !importDropZone) return;
+
+    importFileInput.addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (f) handleStudioImportFile(f);
+      e.target.value = '';
+    });
+
+    importDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      importDropZone.classList.add('drag-over');
+    });
+
+    importDropZone.addEventListener('dragleave', () => {
+      importDropZone.classList.remove('drag-over');
+    });
+
+    importDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      importDropZone.classList.remove('drag-over');
+      const f = e.dataTransfer?.files?.[0];
+      if (f && f.type.startsWith('image/')) handleStudioImportFile(f);
+    });
+
+    // Preset Payload Chips
+    document.querySelectorAll('.payload-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const type = chip.getAttribute('data-preset');
+        let sample = '';
+        if (type === 'url') sample = 'https://vibecode.studio';
+        else if (type === 'wifi') sample = 'WIFI:S:Home_Network_5G;T:WPA;P:secretPass123;;';
+        else if (type === 'vcard') sample = 'BEGIN:VCARD\nVERSION:3.0\nN:Smith;Alex\nFN:Alex Smith\nTEL:+15550199\nEND:VCARD';
+        else if (type === 'email') sample = 'MATMSG:TO:support@vibecode.studio;SUB:Hello;BODY:Scanned payload text;;';
+
+        if (sample) {
+          barcodeInput.value = sample;
+          state.payload = sample;
+          renderBarcode();
+        }
+      });
+    });
+
+    // Stage Background Toggles
+    const stageBgToggles = document.getElementById('stageBgToggles');
+    const viewportStage = document.getElementById('viewportStage');
+    if (stageBgToggles && viewportStage) {
+      stageBgToggles.querySelectorAll('.stage-theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          stageBgToggles.querySelectorAll('.stage-theme-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const bgType = btn.getAttribute('data-bg');
+          viewportStage.className = `viewport-stage stage-bg-${bgType}`;
+        });
+      });
+    }
+  }
+
+  function handleStudioImportFile(file) {
+    const importStatus = document.getElementById('studioImportStatus');
+    if (importStatus) {
+      importStatus.classList.remove('hidden');
+      importStatus.innerHTML = '<span class="spinner-ring"></span> Analyzing &amp; decoding uploaded barcode…';
+    }
+
+    const fr = new FileReader();
+    fr.onload = e => {
+      const dataUrl = e.target.result;
+      const img = new Image();
+      img.onload = async () => {
+        let result = null;
+        try {
+          // Try Native BarcodeDetector first
+          if ('BarcodeDetector' in window) {
+            const detector = new window.BarcodeDetector({
+              formats: ['pdf417', 'qr_code', 'code_128', 'data_matrix', 'aztec', 'ean_13', 'upc_a']
+            });
+            const res = await detector.detect(img);
+            if (res && res.length > 0) {
+              const item = res[0];
+              result = { text: item.rawValue, format: item.format };
+            }
+          }
+        } catch (_) {}
+
+        // Fallback to jsQR
+        if (!result && typeof window.jsQR === 'function') {
+          const cvs = document.createElement('canvas');
+          cvs.width = img.naturalWidth || img.width;
+          cvs.height = img.naturalHeight || img.height;
+          const ctx = cvs.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const idata = ctx.getImageData(0, 0, cvs.width, cvs.height);
+          const qr = window.jsQR(idata.data, cvs.width, cvs.height, { inversionAttempts: 'attemptBoth' });
+          if (qr && qr.data) {
+            result = { text: qr.data, format: 'qr_code' };
+          }
+        }
+
+        // Fallback to ZXing
+        if (!result && window.ZXing && window.ZXing.BrowserMultiFormatReader) {
+          try {
+            const hints = new Map();
+            hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
+            const reader = new window.ZXing.BrowserMultiFormatReader(hints);
+            let zxRes = await reader.decodeFromImageElement(img);
+            if (zxRes && typeof zxRes.then === 'function') zxRes = await zxRes;
+            if (zxRes) {
+              const txt = typeof zxRes.getText === 'function' ? zxRes.getText() : String(zxRes.text || zxRes);
+              const fmt = typeof zxRes.getBarcodeFormat === 'function' ? zxRes.getBarcodeFormat() : 'qrcode';
+              result = { text: txt, format: String(fmt).toLowerCase() };
+            }
+          } catch (_) {}
+        }
+
+        if (result && result.text) {
+          let targetSym = 'qrcode';
+          const fmtLower = String(result.format).toLowerCase();
+          if (fmtLower.includes('qr')) targetSym = 'qrcode';
+          else if (fmtLower.includes('128')) targetSym = 'code128';
+          else if (fmtLower.includes('417')) targetSym = 'pdf417';
+          else if (fmtLower.includes('matrix')) targetSym = 'datamatrix';
+          else if (fmtLower.includes('ean')) targetSym = 'ean13';
+          else if (fmtLower.includes('upc')) targetSym = 'upca';
+          else if (fmtLower.includes('aztec')) targetSym = 'azteccode';
+
+          state.currentSymbology = targetSym;
+          state.payload = result.text;
+          barcodeTypeSelect.value = targetSym;
+          barcodeInput.value = result.text;
+
+          // Sample Bar & Background Colors
+          const colors = sampleImageColors(img);
+          if (colors) {
+            state.barColor = colors.barColor;
+            barColorInput.value = colors.barColor;
+            barColorHex.value = colors.barColor.toUpperCase();
+
+            state.bgColor = colors.bgColor;
+            bgColorInput.value = colors.bgColor;
+            bgColorHex.value = colors.bgColor.toUpperCase();
+          }
+
+          renderBarcode();
+
+          if (importStatus) {
+            importStatus.innerHTML = `<i class="ri-checkbox-circle-line"></i> Auto-imported payload! Customize colors, scale &amp; format below.`;
+          }
+        } else {
+          if (importStatus) {
+            importStatus.innerHTML = `<i class="ri-error-warning-line" style="color:#ef4444"></i> Could not decode barcode from image. You can manually enter text below.`;
+          }
+        }
+      };
+      img.src = dataUrl;
+    };
+    fr.readAsDataURL(file);
+  }
+
+  function sampleImageColors(img) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 60;
+      canvas.height = 60;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, 60, 60);
+      const data = ctx.getImageData(0, 0, 60, 60).data;
+
+      let minL = 255, maxL = 0;
+      let barCol = '#000000', bgCol = '#ffffff';
+
+      for (let i = 0; i < data.length; i += 16) {
+        const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+        if (a < 128) continue;
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        const hex = '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        if (lum < minL) { minL = lum; barCol = hex; }
+        if (lum > maxL) { maxL = lum; bgCol = hex; }
+      }
+      return { barColor: barCol, bgColor: bgCol };
+    } catch (_) {
+      return null;
+    }
   }
 
   // --- THEME & TOAST UTILS ---

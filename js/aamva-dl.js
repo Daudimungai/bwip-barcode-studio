@@ -87,10 +87,12 @@ const HAIR_COLORS = [
 const RACE_CODES = [
   { code: 'Black', name: 'Black' },
   { code: 'White', name: 'White' },
-  { code: 'Asian', name: 'Asian / Pacific Islander' },
-  { code: 'Hispanic', name: 'Hispanic' },
-  { code: 'AI/AN', name: 'American Indian / Alaska Native' },
-  { code: 'Unknown', name: 'Unknown / Other' }
+  { code: 'Asian', name: 'Asian' },
+  { code: 'American Indian/Alaskan Native', name: 'American Indian/Alaskan Native' },
+  { code: 'Hispanic/Latino', name: 'Hispanic/Latino' },
+  { code: 'Pacific Islander', name: 'Pacific Islander' },
+  { code: 'Other', name: 'Other' },
+  { code: 'Unknown', name: 'Unknown' }
 ];
 
 const SUFFIX_CODES = [
@@ -129,7 +131,7 @@ function getSampleDLFormData() {
     eyeColor: 'BRO',
     hairAsOnDl: 'BRN',
     hairColor: 'BRO',
-    race: 'White',
+    race: 'Black',
 
     // Address
     street: '516 Anson Ct',
@@ -290,66 +292,220 @@ function parseAAMVAString(raw) {
 }
 
 /**
- * Field Randomizer Helpers (pdf417.pro calculator buttons)
+ * AAMVA Field Auto-Generator Suite (pdf417.pro equivalent calculator buttons)
+ *
+ * Each function generates a realistic, AAMVA-spec-compliant value.
+ * DD and ICN are computed from related fields to stay internally consistent.
  */
-function getRandomDLNum() {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const l = letters[Math.floor(Math.random() * letters.length)];
-  const n = Math.floor(1000000 + Math.random() * 9000000);
-  return `${l}${n}`;
+
+// --- State-specific DL number format rules ---
+const DL_NUM_FORMATS = {
+  CA: () => { const l = _rLetter(); const n = _rInt(1000000, 9999999); return `${l}${n}`; },
+  NY: () => { const n = _rInt(100000000, 999999999); return String(n); },
+  TX: () => { const n = _rInt(10000000, 99999999); return String(n); },
+  FL: () => { const l = _rLetter(); const n = _rInt(100000000000, 999999999999); return `${l}${n}`.substring(0,12); },
+  IL: () => { const l = _rLetter(); const n = _rInt(100000000000, 999999999999); return `${l}${n}`.substring(0,12); },
+  PA: () => { const n = _rInt(10000000, 99999999); return String(n); },
+  OH: () => { const l1 = _rLetter(); const l2 = _rLetter(); const n = _rInt(100000, 999999); return `${l1}${l2}${n}`; },
+  GA: () => { const n = _rInt(1000000, 9999999); return String(n).padStart(9, '0'); },
+  NC: () => { const n = _rInt(1000000, 9999999); return String(n); },
+  MI: () => { const l = _rLetter(); const n = _rInt(100000000000, 999999999999); return `${l}${n}`.substring(0,13); },
+  NJ: () => { const l = _rLetter(); const n = _rInt(100000000000, 999999999999); return `${l}${n}`.substring(0,15); },
+  VA: () => { const l = _rLetter(); const n = _rInt(10000000, 99999999); return `${l}${n}`; },
+  WA: () => { const l1=_rLetter(),l2=_rLetter(),l3=_rLetter(); const n=_rInt(100000000,999999999); return `${l1}${l2}${l3}${n}`.substring(0,12); },
+  AZ: () => { const l = _rLetter(); const n = _rInt(10000000, 99999999); return `${l}${n}`; },
+  MA: () => { const l = _rLetter(); const n = _rInt(10000000, 99999999); return `${l}${n}`; },
+  DEFAULT: () => { const l = _rLetter(); const n = _rInt(1000000, 9999999); return `${l}${n}`; }
+};
+
+// Renewal cycles in years by state
+const RENEWAL_YEARS = {
+  CA: 5, NY: 8, TX: 6, FL: 8, IL: 4, PA: 4, OH: 4, GA: 8, NC: 8,
+  MI: 4, NJ: 4, VA: 8, WA: 6, AZ: 12, MA: 5, TN: 8, IN: 6, MO: 6,
+  MD: 8, WI: 8, CO: 5, MN: 4, SC: 8, AL: 4, LA: 6, KY: 4, OR: 8,
+  OK: 4, CT: 6, UT: 5, IA: 8, NV: 8, AR: 8, MS: 8, KS: 6, NM: 8,
+  NE: 5, ID: 8, WV: 5, HI: 8, NH: 5, ME: 6, RI: 5, MT: 8, DE: 5,
+  SD: 5, ND: 5, AK: 5, VT: 4, WY: 4, DC: 8, DEFAULT: 5
+};
+
+// Helpers
+function _rLetter() {
+  return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+}
+function _rInt(min, max) {
+  return Math.floor(min + Math.random() * (max - min + 1));
+}
+function _rPad(n, len) {
+  return String(n).padStart(len, '0');
 }
 
-function getRandomFirstName() {
-  const names = ['Joe', 'John', 'Michael', 'James', 'David', 'Robert', 'William', 'Richard', 'Thomas', 'Charles', 'Daniel', 'Matthew', 'Anthony', 'Donald', 'Mark', 'Paul', 'Steven', 'Andrew', 'Kenneth', 'Joshua', 'Kevin', 'Brian', 'George', 'Edward', 'Ronald', 'Timothy', 'Jason', 'Jeffrey', 'Ryan', 'Jacob', 'Gary', 'Nicholas', 'Eric', 'Jonathan', 'Stephen', 'Larry', 'Justin', 'Scott', 'Brandon', 'Benjamin'];
-  return names[Math.floor(Math.random() * names.length)];
+/**
+ * Generates a state-formatted DL number
+ * @param {string} stateCode  e.g. 'CA', 'NY'
+ */
+function getRandomDLNum(stateCode) {
+  const fmt = DL_NUM_FORMATS[stateCode] || DL_NUM_FORMATS.DEFAULT;
+  return fmt();
+}
+
+function getRandomFirstName(sex) {
+  const male = ['James','John','Robert','Michael','William','David','Richard','Joseph','Thomas','Charles','Christopher','Daniel','Matthew','Anthony','Mark','Donald','Steven','Paul','Andrew','Kenneth','Joshua','Kevin','Brian','George','Timothy','Jason','Jeffrey','Ryan','Jacob','Gary','Nicholas','Eric','Jonathan','Stephen','Larry','Justin','Scott','Brandon','Benjamin','Samuel'];
+  const female = ['Mary','Patricia','Jennifer','Linda','Barbara','Elizabeth','Susan','Jessica','Sarah','Karen','Lisa','Nancy','Betty','Margaret','Sandra','Ashley','Dorothy','Kimberly','Emily','Donna','Michelle','Carol','Amanda','Melissa','Deborah','Stephanie','Rebecca','Sharon','Laura','Cynthia','Kathleen','Amy','Angela','Shirley','Anna','Brenda','Pamela','Emma','Nicole','Helen'];
+  const pool = sex === '2' ? female : male;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 function getRandomLastName() {
-  const names = ['Meza', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill'];
+  const names = ['Smith','Johnson','Williams','Brown','Jones','Garcia','Miller','Davis','Rodriguez','Martinez','Hernandez','Lopez','Gonzalez','Wilson','Anderson','Thomas','Taylor','Moore','Jackson','Martin','Lee','Perez','Thompson','White','Harris','Sanchez','Clark','Ramirez','Lewis','Robinson','Walker','Young','Allen','King','Wright','Scott','Torres','Nguyen','Hill','Adams','Baker','Nelson','Carter','Mitchell','Perez','Roberts','Turner','Phillips','Campbell','Evans','Parker'];
   return names[Math.floor(Math.random() * names.length)];
 }
 
 function getRandomMiddleName() {
-  const names = ['William', 'Alexander', 'James', 'Edward', 'Joseph', 'Lee', 'Thomas', 'Charles', 'Michael', 'David', 'Alan', 'Ray', 'Wayne', 'Eugene', 'Scott', 'Francis', 'Paul', 'Anthony', 'Henry', 'Arthur'];
+  const names = ['William','Alexander','James','Edward','Joseph','Lee','Thomas','Charles','Michael','David','Alan','Ray','Wayne','Eugene','Scott','Francis','Paul','Anthony','Henry','Arthur','Lynn','Marie','Ann','Jean','Mae','Grace','Kay','Ruth','June','Joy'];
   return names[Math.floor(Math.random() * names.length)];
 }
 
+/**
+ * Random DOB: age 18–70, safe for a valid adult DL
+ */
 function getRandomDOB() {
-  const m = String(Math.floor(1 + Math.random() * 12)).padStart(2, '0');
-  const d = String(Math.floor(1 + Math.random() * 28)).padStart(2, '0');
-  const y = Math.floor(1965 + Math.random() * 38);
-  return `${m}${d}${y}`;
+  const age = _rInt(18, 70);
+  const today = new Date();
+  const birthYear = today.getFullYear() - age;
+  const birthMonth = _rInt(1, 12);
+  const maxDay = new Date(birthYear, birthMonth, 0).getDate();
+  const birthDay = _rInt(1, maxDay);
+  return _rPad(birthMonth, 2) + _rPad(birthDay, 2) + birthYear;
 }
 
+/**
+ * Generates an issue date: random recent date (1–5 years ago)
+ */
 function getRandomIssueDate() {
-  const m = String(Math.floor(1 + Math.random() * 12)).padStart(2, '0');
-  const d = String(Math.floor(1 + Math.random() * 28)).padStart(2, '0');
-  const y = Math.floor(2020 + Math.random() * 4);
-  return `${m}${d}${y}`;
+  const today = new Date();
+  const yearsAgo = _rInt(1, 4);
+  const issueDate = new Date(today.getFullYear() - yearsAgo, _rInt(0, 11), _rInt(1, 28));
+  return _rPad(issueDate.getMonth() + 1, 2) + _rPad(issueDate.getDate(), 2) + issueDate.getFullYear();
 }
 
-function getRandomExpDate(dobStr) {
-  let m = '01';
-  let d = '01';
+/**
+ * Calculates a proper expiry date:
+ * - Expires on the holder's BIRTHDAY month+day (AAMVA standard)
+ * - Adds the state renewal cycle (4–12 years) from issue year
+ * @param {string} dobStr   MMDDYYYY
+ * @param {string} stateCode  e.g. 'CA'
+ * @param {string} issueDateStr  MMDDYYYY
+ */
+function getRandomExpDate(dobStr, stateCode, issueDateStr) {
+  // Extract birth month/day
+  let birthMM = '01', birthDD = '15';
   if (dobStr && dobStr.length === 8) {
-    m = dobStr.substring(0, 2);
-    d = dobStr.substring(2, 4);
+    birthMM = dobStr.substring(0, 2);
+    birthDD = dobStr.substring(2, 4);
   }
-  const y = Math.floor(2026 + Math.random() * 5);
-  return `${m}${d}${y}`;
+
+  // Get issue year
+  let issueYear = new Date().getFullYear();
+  if (issueDateStr && issueDateStr.length === 8) {
+    issueYear = parseInt(issueDateStr.substring(4, 8), 10);
+  }
+
+  // Get renewal cycle
+  const renewalYears = RENEWAL_YEARS[stateCode] || RENEWAL_YEARS.DEFAULT;
+  const expYear = issueYear + renewalYears;
+
+  return `${birthMM}${birthDD}${expYear}`;
 }
 
-function getRandomDD() {
-  const dateStr = '12/01/2020';
-  const num = Math.floor(10000 + Math.random() * 90000);
-  const code = 'AAFD/' + Math.floor(10 + Math.random() * 90);
-  return `${dateStr}${num}/${code}`;
+/**
+ * Calculates a realistic Document Discriminator (DCF).
+ * Format: MM/DD/YYYY + 5-digit-sequence + / + IIN-prefix + 4-char-code
+ * Based on real AAMVA DCF patterns observed in production barcodes.
+ * @param {string} issueDateStr  MMDDYYYY
+ * @param {string} iinStr  e.g. '636000'
+ * @param {string} dlNumStr
+ */
+function getRandomDD(issueDateStr, iinStr, dlNumStr) {
+  // Parse issue date into MM/DD/YYYY format
+  let formattedDate;
+  if (issueDateStr && issueDateStr.length === 8) {
+    const mm = issueDateStr.substring(0, 2);
+    const dd = issueDateStr.substring(2, 4);
+    const yyyy = issueDateStr.substring(4, 8);
+    formattedDate = `${mm}/${dd}/${yyyy}`;
+  } else {
+    const now = new Date();
+    formattedDate = `${_rPad(now.getMonth()+1,2)}/${_rPad(now.getDate(),2)}/${now.getFullYear()}`;
+  }
+
+  // Use last 3 digits of IIN as a prefix component
+  const iinSuffix = iinStr ? iinStr.substring(3, 6) : _rPad(_rInt(0, 999), 3);
+
+  // Derive a pseudo-unique sequence number from DL number
+  let seqBase = 10000;
+  if (dlNumStr) {
+    // Hash DL number chars into a numeric offset
+    for (let i = 0; i < dlNumStr.length; i++) {
+      seqBase += dlNumStr.charCodeAt(i) * (i + 7);
+    }
+    seqBase = (seqBase % 89999) + 10000;
+  } else {
+    seqBase = _rInt(10000, 99999);
+  }
+
+  // Audit code portion (state-doc-sequence suffix)
+  const auditCode = `AAFD/${_rPad(_rInt(10, 99), 2)}`;
+
+  return `${formattedDate}${iinSuffix}${seqBase}/${auditCode}`;
 }
 
-function getRandomICN(dlNumStr) {
-  const prefix = Math.floor(20000 + Math.random() * 99999);
-  const suffix = Math.floor(1000 + Math.random() * 9999);
-  const dl = dlNumStr || 'C7289427';
-  return `${prefix}${dl}${suffix}`;
+/**
+ * Calculates a realistic Inventory Control Number (DCK).
+ * Format varies by state; common pattern: IIN + DL# + MMYYYY (issue month/year)
+ * @param {string} dlNumStr
+ * @param {string} iinStr  e.g. '636000'
+ * @param {string} issueDateStr  MMDDYYYY
+ */
+function getRandomICN(dlNumStr, iinStr, issueDateStr) {
+  const iin = iinStr || '636000';
+  const dl = (dlNumStr || 'D1234567').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  // Date suffix: MMYYYY from issue date
+  let dateSuffix;
+  if (issueDateStr && issueDateStr.length === 8) {
+    const mm = issueDateStr.substring(0, 2);
+    const yyyy = issueDateStr.substring(4, 8);
+    dateSuffix = mm + yyyy;
+  } else {
+    const now = new Date();
+    dateSuffix = _rPad(now.getMonth() + 1, 2) + now.getFullYear();
+  }
+
+  // Checksum digit (simple mod-10 of DL char codes)
+  let checksum = 0;
+  for (let i = 0; i < dl.length; i++) checksum += dl.charCodeAt(i);
+  checksum = checksum % 10;
+
+  return `${iin}${dl}${dateSuffix}${checksum}`;
 }
 
+// Legacy compatibility alias (called by randomizeAllDLFields for simple random address)
+function getRandomAddress() {
+  const streets = ['Maple St','Oak Ave','Pine Rd','Cedar Blvd','Elm Dr','Sunset Blvd','Main St','Park Ave','Lake Dr','Hill Rd','Valley Rd','River St','Forest Ave','Washington Blvd','Lincoln Ave'];
+  const houseNo = _rInt(100, 9999);
+  return `${houseNo} ${streets[Math.floor(Math.random() * streets.length)]}`;
+}
+
+const CITY_ZIP_BY_STATE = {
+  CA: [['Los Angeles','90001'],['San Francisco','94102'],['San Diego','92101'],['Sacramento','95814'],['Rohnert Park','94928']],
+  NY: [['New York','10001'],['Buffalo','14201'],['Albany','12201'],['Rochester','14601'],['Yonkers','10701']],
+  TX: [['Houston','77001'],['Dallas','75201'],['Austin','78701'],['San Antonio','78201'],['El Paso','79901']],
+  FL: [['Miami','33101'],['Orlando','32801'],['Tampa','33601'],['Jacksonville','32201'],['Tallahassee','32301']],
+  IL: [['Chicago','60601'],['Rockford','61101'],['Springfield','62701'],['Aurora','60505'],['Naperville','60540']],
+  DEFAULT: [['Springfield','62701'],['Riverside','92501'],['Franklin','37064'],['Clinton','52732'],['Georgetown','40324']]
+};
+
+function getRandomCityZip(stateCode) {
+  const pool = CITY_ZIP_BY_STATE[stateCode] || CITY_ZIP_BY_STATE.DEFAULT;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
